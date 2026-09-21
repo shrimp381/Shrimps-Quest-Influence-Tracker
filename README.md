@@ -1,76 +1,25 @@
-# Shrimp's Enhanced Horizons
+# Shrimps Quest Log
 
-A floating, draggable **parallax horizon** window for Foundry VTT scenes — the same core
-window, layer terrain and Points-of-Interest table as the free
-[Shrimp's Distant Horizons](https://github.com/Shrimp381/shrimps-distant-horizons), plus a
-handful of deeper tools built on top of it.
+An interactive quest log, with GM and player views, tabs and categories, dated updates, party notes, an optional Segmented Cycle tie in, and its own internal calendar.
 
-## What's in this module (v0.1.0)
+## What it does
 
-Everything the free module does — floating/dockable window, 6-layer parallax terrain with
-custom-image uploads, draggable POIs with Unknown/Rumored/Discovered states, day/night,
-GM/Player view, Lock View, Free Dock, per-scene save + live GM→player sync — **plus:**
+- **Add and edit quests.** Each quest has a title, category, summary, and status (Active, Completed, Failed). Click a quest's summary row to expand it.
+- **Tabs.** Quests are split across Main Quest, Side Quest, and Rumours by default. As GM you can rename any tab, delete one (as long as one remains), and add new ones with the "+ Tab" button. Completed and Failed quests are automatically pulled out of their tab and shown, with their title struck through in their status colour, on a fourth "Finished" tab that always exists and can't be deleted.
+- **Categories.** Each tab has its own set of categories (city, faction, region, whatever fits), editable and deletable by the GM, used to filter that tab's quest list.
+- **Quest Updates.** GM-authored notes that get added to a quest as more of it is revealed. Each one can be toggled between hidden and revealed; once revealed, players see it and it is stamped with the date it was revealed, not the date the GM wrote it. The GM can delete any update or party note.
+- **Party Notes.** Anyone can add a note to a quest, and it is signed with their name and the in-game date. The GM can delete any note.
+- **Segment Cycle Integration.** Optional, per quest, GM side, and only shown if the Segmented Cycle module is installed and active. Pick which bar (Day, Night, or the custom bar) a quest is tied to and how many segments it needs; as that bar fills up in Segmented Cycle, the quest's own counter ticks forward automatically. A "Force tick" button is there for a manual override.
+- **Calendar Link.** Optional, per quest, GM side. Pin a quest to a date on Shrimps Quest Log's own calendar with "Set Date", so the party can see it coming from the calendar panel at a glance. "Change" and "Clear" undo or move it.
+- **Internal calendar.** Fully self-contained: name your months, set how many days each one has, and set a year label. The in-game date at the top of the log, the persistent calendar panel, and every date stamped on a quest, update, or note all come from this. If Simple Calendar is installed and active, Shrimps Quest Log can instead show its date at the top of the log (toggle this in the settings cog); the calendar panel below always keeps browsing Shrimps Quest Log's own calendar regardless, since that is what carries the quest deadlines and notes.
+- **Calendar panel.** A collapsible panel, top right of the log, showing the current month as a grid. Today is highlighted, and any date with a note or a quest linked to it gets a small dot. Click a date to see what's on it; as GM you can add or delete freeform notes there (upcoming events, deadlines).
+- **Settings cog.** Top of the log, GM only. Toggle the calendar section and the Segment Cycle section on or off for the whole table, and build out the internal calendar's months from here.
+- **Scene Controls button.** A "Shrimps Quest Log" tool (scroll icon) sits in the canvas Scene Controls toolbar, in the same Notes group Simple Calendar and similar modules use. Click it to open or close the log.
 
-- **Journal-linked POIs.** Link any POI to one of your world's real Journal Entries from
-  the POI table's "Journal" column. Once that POI is Discovered, a small journal badge
-  appears on its marker — click it (as GM or player) to open the real entry in Foundry's
-  own journal sheet. The Journal Entries panel (Settings → Journal Entries) is a read-only
-  mirror of your world's Journal sidebar, kept live via Foundry's own hooks.
-- **Presets.** Save the current layers, POIs, palette and horizon length as a named preset
-  (Settings → Presets), then load it again later — on this scene or a different one.
-  Presets are world-scoped (`game.settings`), so every GM in the world shares the same
-  library and sees updates immediately.
-- **Procedural horizon generator.** Pick a biome (or "Random"/"Combo" to mix two), a
-  ruggedness, and a POI density, then generate a full 6-layer horizon with placed POIs from
-  a seed (Settings → Procedural Generator). The same seed always produces the same result.
-- **Vantage Point.** A one-click expanded diorama view — layers pull apart on a simulated
-  depth axis instead of blending flatly, like a popup book. It temporarily grows to fill the
-  whole module window (collapsing the Layers/POI panel below it) so there's more room to see
-  each layer; toggle it off to return to the normal view. Purely a local display toggle —
-  never saved or synced, works the same whether the window is docked or undocked.
+## Optional: Simple Calendar
 
-**What ships pre-populated vs. blank (on a scene with no saved setup yet):**
-- The 6 horizon **layers** come with sensible default terrain so there's something to look
-  at immediately — edit, reorder, replace, or run the Procedural Generator to build a new one.
-- **Points of Interest start empty.** Use "+ Add POI" or the generator to place some.
+Shrimps Quest Log works fully without it. If Simple Calendar is installed and active, open the settings cog and turn on "Sync the displayed date with Simple Calendar" to have the top of the log show Simple Calendar's current date instead of Shrimps Quest Log's own, for logging and stamping purposes.
 
-## What was deliberately left out of this v0.1.0
+## Optional: Segmented Cycle
 
-This module started life as a heavier, planned "premium" companion to the free Distant
-Horizons module — a waypoint/journey mode, a party-position tracker on the horizon, and a
-fog-of-war-style discovery veil for Vantage Point were all prototyped alongside the four
-features above. None of those felt like they'd earned a premium tier yet, so they were cut
-from this release; this v0.1.0 only ships the four features that felt genuinely useful on
-their own. They may return in a future version.
-
-## Installing in Foundry VTT
-
-**Manifest URL** (once this repo is published — see below):
-
-```
-https://raw.githubusercontent.com/Shrimp381/shrimps-enhanced-horizons/main/module.json
-```
-
-In Foundry: **Add-on Modules → Install Module**, paste that URL into the **Manifest URL**
-field, and click **Install**. Then enable it from your world's **Manage Modules** list.
-
-Once enabled, open a scene and look in the **Notes** controls group (the same toolbar
-group journal pins live in, on the left-hand side of the canvas) for a mountain-range
-icon — click it to show or hide the Enhanced Horizons window.
-
-## Project structure
-
-```
-shrimps-enhanced-horizons/
-├── module.json               Foundry module manifest
-├── scripts/
-│   └── enhanced-horizons.js  All UI logic (esmodule)
-├── styles/
-│   └── enhanced-horizons.css
-├── assets/
-│   ├── shrimp-logo.png
-│   ├── forest-hand-1.png
-│   └── forest-hand-2.png
-├── LICENSE
-└── README.md
-```
+Shrimps Quest Log works fully without it, and the Segment Cycle Integration section on a quest is hidden entirely unless the Segmented Cycle module is installed and active. When it is, tie a quest to Day, Night, or the custom bar; every segment that bar fills in Segmented Cycle ticks that quest's counter forward by the same amount, up to whatever you allocated.
