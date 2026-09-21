@@ -1,0 +1,27 @@
+{
+  "id": "shrimps-enhanced-horizons",
+  "title": "Shrimp's Enhanced Horizons",
+  "description": "A parallax horizon and points-of-interest overlay for your scenes, with journal-linked POIs, save/load presets, a procedural horizon generator, and an expanded diorama Vantage Point view. Built on top of Shrimp's Distant Horizons — see the README for full status and roadmap.",
+  "version": "0.1.0",
+  "compatibility": {
+    "minimum": "13",
+    "verified": "13"
+  },
+  "authors": [
+    {
+      "name": "Shrimp"
+    }
+  ],
+  "esmodules": [
+    "scripts/enhanced-horizons.js"
+  ],
+  "styles": [
+    "styles/enhanced-horizons.css"
+  ],
+  "url": "https://github.com/Shrimp381/shrimps-enhanced-horizons",
+  "manifest": "https://raw.githubusercontent.com/Shrimp381/shrimps-enhanced-horizons/main/module.json",
+  "download": "https://github.com/Shrimp381/shrimps-enhanced-horizons/releases/latest/download/module.zip",
+  "readme": "https://github.com/Shrimp381/shrimps-enhanced-horizons/blob/main/README.md",
+  "bugs": "https://github.com/Shrimp381/shrimps-enhanced-horizons/issues",
+  "license": "LICENSE"
+}
