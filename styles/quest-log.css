@@ -238,10 +238,22 @@
 }
 
 .ql-shrimp-icon {
-  width: 24px;
-  height: 24px;
-  object-fit: contain;
-  flex-shrink: 0;
+  width: 20px;
+  height: 28px;
+  flex: 0 0 auto;
+  /* Borderless silhouette that recolors with the active theme (see
+     --ql-title above) rather than a flat raster icon — same technique as
+     the artifact prototype: the PNG's alpha channel is the mask shape, and
+     background-color paints through it. */
+  background-color: var(--ql-title);
+  -webkit-mask-image: url("../assets/shrimp-icon.png");
+  mask-image: url("../assets/shrimp-icon.png");
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
 }
 
 .ql-title {
@@ -259,7 +271,7 @@
   gap: 12px;
   padding: 8px 20px;
   background: #3d1414;
-  border-bottom: 1px solid rgba(201, 162, 39, 0.35);
+  border-bottom: 1px solid color-mix(in srgb, var(--ql-title) 35%, transparent);
   color: #e7c9c9;
   font-size: 13px;
 }
@@ -288,7 +300,7 @@
   color: var(--ql-text);
   font-weight: 600;
   cursor: pointer;
-  border-bottom: 1px dashed rgba(201, 162, 39, 0.5);
+  border-bottom: 1px dashed color-mix(in srgb, var(--ql-title) 50%, transparent);
 }
 
 .ql-sc-note {
@@ -297,9 +309,9 @@
 }
 
 .ql-icon-btn {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.16);
-  color: #c9c2ae;
+  background: var(--ql-surface-1);
+  border: 1px solid var(--ql-border);
+  color: var(--ql-text-soft);
   border-radius: 6px;
   padding: 4px 8px;
   font-size: 12px;
@@ -314,8 +326,8 @@
 }
 
 .ql-primary-btn {
-  background: #8b0000;
-  color: #f5ece0;
+  background: var(--ql-title);
+  color: var(--ql-panel-bg);
   border: none;
   border-radius: 8px;
   padding: 9px 16px;
@@ -327,8 +339,8 @@
 
 .ql-ghost-btn {
   background: transparent;
-  color: #8a8272;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: var(--ql-text-muted);
+  border: 1px solid var(--ql-border);
   border-radius: 6px;
   padding: 6px 12px;
   font-size: 12px;
@@ -358,8 +370,8 @@
 
 .ql-dashed-btn {
   background: transparent;
-  color: #8a8272;
-  border: 1px dashed rgba(255, 255, 255, 0.25);
+  color: var(--ql-text-muted);
+  border: 1px dashed var(--ql-border);
   border-radius: 6px;
   padding: 9px 14px;
   font-size: 13px;
@@ -374,9 +386,9 @@
 }
 
 .ql-small-btn {
-  background: rgba(201, 162, 39, 0.18);
-  color: #e8c96a;
-  border: 1px solid rgba(201, 162, 39, 0.4);
+  background: color-mix(in srgb, var(--ql-title) 18%, transparent);
+  color: var(--ql-title);
+  border: 1px solid color-mix(in srgb, var(--ql-title) 40%, transparent);
   border-radius: 6px;
   padding: 6px 12px;
   font-size: 12px;
@@ -385,32 +397,32 @@
 
 .ql-small-btn.ql-ghost {
   background: transparent;
-  color: #8a8272;
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--ql-text-muted);
+  border: 1px solid var(--ql-border-soft);
 }
 
 .ql-small-btn.ql-danger {
   background: transparent;
-  color: #c97b7b;
-  border: 1px solid rgba(139, 0, 0, 0.4);
+  color: var(--ql-bad);
+  border: 1px solid color-mix(in srgb, var(--ql-bad) 40%, transparent);
 }
 
 .ql-small-btn.ql-blue-btn {
-  background: rgba(90, 140, 168, 0.2);
-  color: #9fc7d6;
-  border: 1px solid rgba(90, 140, 168, 0.45);
+  background: color-mix(in srgb, var(--ql-link-neutral) 20%, transparent);
+  color: var(--ql-link-neutral);
+  border: 1px solid color-mix(in srgb, var(--ql-link-neutral) 45%, transparent);
 }
 
 .ql-small-btn.ql-red-btn {
-  background: rgba(139, 0, 0, 0.35);
-  color: #f0d8d8;
-  border: 1px solid rgba(139, 0, 0, 0.5);
+  background: color-mix(in srgb, var(--ql-bad) 35%, transparent);
+  color: color-mix(in srgb, var(--ql-bad) 55%, white);
+  border: 1px solid color-mix(in srgb, var(--ql-bad) 50%, transparent);
 }
 
 .ql-small-btn.ql-indigo-btn {
-  background: rgba(74, 90, 168, 0.3);
-  color: #c8d0f0;
-  border: 1px solid rgba(74, 90, 168, 0.5);
+  background: color-mix(in srgb, var(--ql-link-neutral) 30%, transparent);
+  color: color-mix(in srgb, var(--ql-link-neutral) 60%, white);
+  border: 1px solid color-mix(in srgb, var(--ql-link-neutral) 50%, transparent);
 }
 
 .ql-x-btn {
@@ -424,8 +436,8 @@
 
 .ql-delete-btn {
   background: transparent;
-  border: 1px solid rgba(139, 0, 0, 0.4);
-  color: #c97b7b;
+  border: 1px solid color-mix(in srgb, var(--ql-bad) 40%, transparent);
+  color: var(--ql-bad);
   border-radius: 6px;
   padding: 3px 8px;
   font-size: 10px;
@@ -446,7 +458,7 @@
   left: 0;
   z-index: 30;
   background: var(--ql-panel-bg);
-  border: 1px solid rgba(201, 162, 39, 0.4);
+  border: 1px solid color-mix(in srgb, var(--ql-title) 40%, transparent);
   border-radius: 10px;
   padding: 14px;
   display: flex;
@@ -494,7 +506,7 @@
   width: 4px;
   height: 4px;
   border-radius: 50%;
-  background: #c9a227;
+  background: var(--ql-title);
 }
 
 .ql-hint {
@@ -520,7 +532,7 @@
   align-items: center;
   justify-content: space-between;
   background: var(--ql-panel-bg);
-  border: 1px solid rgba(201, 162, 39, 0.4);
+  border: 1px solid color-mix(in srgb, var(--ql-title) 40%, transparent);
   border-radius: 10px 10px 0 0;
   padding: 10px 14px;
 }
@@ -535,7 +547,7 @@
 
 .ql-calendar-panel-body {
   background: var(--ql-panel-bg-alt);
-  border: 1px solid rgba(201, 162, 39, 0.3);
+  border: 1px solid color-mix(in srgb, var(--ql-title) 30%, transparent);
   border-top: none;
   border-radius: 0 0 10px 10px;
   padding: 12px;
@@ -548,7 +560,7 @@
 
 .ql-daynight-panel {
   background: var(--ql-panel-bg);
-  border: 1px solid rgba(201, 162, 39, 0.4);
+  border: 1px solid color-mix(in srgb, var(--ql-title) 40%, transparent);
   border-radius: 10px;
   padding: 10px 14px;
   display: flex;
@@ -605,7 +617,7 @@
 }
 
 .ql-daynight-btn.ql-active {
-  background: rgba(201, 162, 39, 0.25);
+  background: color-mix(in srgb, var(--ql-title) 25%, transparent);
 }
 
 .ql-daynight-icon {
@@ -631,9 +643,9 @@
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  color: #e8c96a;
-  background: rgba(201, 162, 39, 0.1);
-  border: 1px solid rgba(201, 162, 39, 0.3);
+  color: var(--ql-title);
+  background: color-mix(in srgb, var(--ql-title) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ql-title) 30%, transparent);
   border-radius: 6px;
   padding: 5px 8px;
 }
@@ -648,7 +660,7 @@
   gap: 8px;
   font-size: 12px;
   color: var(--ql-text-soft);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--ql-surface-1);
   border-radius: 6px;
   padding: 6px 8px;
 }
@@ -674,7 +686,7 @@
   margin: 16px 24px 0 24px;
   padding: 18px;
   background: var(--ql-surface-2);
-  border: 1px solid rgba(201, 162, 39, 0.3);
+  border: 1px solid color-mix(in srgb, var(--ql-title) 30%, transparent);
   border-radius: 12px;
   display: flex;
   flex-direction: column;
@@ -832,7 +844,7 @@
   align-items: center;
   gap: 4px;
   padding: 16px 24px 0 24px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--ql-border-soft);
   flex-wrap: wrap;
 }
 
@@ -917,9 +929,9 @@
 
 .ql-category-chip {
   font-size: 11px;
-  color: #c9a227;
-  background: rgba(201, 162, 39, 0.12);
-  border: 1px solid rgba(201, 162, 39, 0.3);
+  color: var(--ql-title);
+  background: color-mix(in srgb, var(--ql-title) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ql-title) 30%, transparent);
   border-radius: 20px;
   padding: 3px 10px;
   white-space: nowrap;
@@ -946,9 +958,9 @@
 
 .ql-linked-chip {
   font-size: 11px;
-  color: #9fc7d6;
-  background: rgba(90, 140, 168, 0.12);
-  border: 1px solid rgba(90, 140, 168, 0.35);
+  color: var(--ql-link-neutral);
+  background: color-mix(in srgb, var(--ql-link-neutral) 12%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ql-link-neutral) 35%, transparent);
   border-radius: 20px;
   padding: 3px 10px;
   white-space: nowrap;
@@ -1000,14 +1012,14 @@
   text-transform: uppercase;
 }
 
-.ql-block-title.ql-red { color: #d97b7b; }
-.ql-block-title.ql-gold { color: #c9a227; }
-.ql-block-title.ql-blue { color: #9fc7d6; }
-.ql-block-title.ql-indigo { color: #9aa7e0; }
+.ql-block-title.ql-red { color: var(--ql-bad); }
+.ql-block-title.ql-gold { color: var(--ql-title); }
+.ql-block-title.ql-blue { color: var(--ql-link-neutral); }
+.ql-block-title.ql-indigo { color: var(--ql-link-neutral); }
 
 .ql-updates-block {
-  background: rgba(139, 0, 0, 0.08);
-  border: 1px solid rgba(139, 0, 0, 0.35);
+  background: color-mix(in srgb, var(--ql-bad) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ql-bad) 35%, transparent);
 }
 
 .ql-update-row {
@@ -1016,7 +1028,7 @@
   gap: 8px;
   font-size: 13px;
   padding: 6px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--ql-border-soft);
 }
 
 .ql-update-text-col {
@@ -1032,8 +1044,8 @@
 }
 
 .ql-revealed-block {
-  background: rgba(201, 162, 39, 0.06);
-  border: 1px solid rgba(201, 162, 39, 0.25);
+  background: color-mix(in srgb, var(--ql-title) 6%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ql-title) 25%, transparent);
 }
 
 .ql-revealed-note {
@@ -1048,8 +1060,8 @@
 }
 
 .ql-notes-block {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--ql-surface-1);
+  border: 1px solid var(--ql-border-soft);
 }
 
 .ql-player-note {
@@ -1057,7 +1069,7 @@
   flex-direction: column;
   gap: 2px;
   padding: 8px 10px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--ql-surface-1);
   border-radius: 8px;
 }
 
@@ -1065,11 +1077,11 @@
   display: flex;
   justify-content: space-between;
   font-size: 11px;
-  color: #8a8272;
+  color: var(--ql-text-muted);
 }
 
 .ql-note-author {
-  color: #c9a227;
+  color: var(--ql-title);
   font-weight: 600;
 }
 
@@ -1086,8 +1098,8 @@
 }
 
 .ql-link-block {
-  background: rgba(90, 140, 168, 0.08);
-  border: 1px solid rgba(90, 140, 168, 0.35);
+  background: color-mix(in srgb, var(--ql-link-neutral) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ql-link-neutral) 35%, transparent);
 }
 
 .ql-link-row {
@@ -1099,7 +1111,7 @@
 
 .ql-link-text {
   font-size: 13px;
-  color: #cfe0e8;
+  color: var(--ql-link-neutral);
 }
 
 .ql-date-picker-row {
@@ -1107,14 +1119,14 @@
   gap: 8px;
   align-items: flex-end;
   flex-wrap: wrap;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--ql-surface-1);
   border-radius: 8px;
   padding: 10px;
 }
 
 .ql-segment-block {
-  background: rgba(74, 90, 168, 0.08);
-  border: 1px solid rgba(74, 90, 168, 0.35);
+  background: color-mix(in srgb, var(--ql-link-neutral) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ql-link-neutral) 35%, transparent);
 }
 
 .ql-segment-head {
@@ -1176,7 +1188,7 @@
 
 .ql-ticked-count {
   font-size: 12px;
-  color: #c8c8ba;
+  color: var(--ql-text-muted);
 }
 
 .ql-segment-actions {
@@ -1203,7 +1215,7 @@
 .ql-empty-state {
   text-align: center;
   padding: 50px 0;
-  color: #5c5648;
+  color: var(--ql-text-faint);
   font-size: 14px;
 }
 
@@ -1306,20 +1318,42 @@
   gap: 8px;
 }
 
-.ql-inf-bg-menu label.ql-inf-file-btn {
+.ql-inf-bg-menu .ql-inf-file-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
   font-size: 11px;
   color: var(--ql-text-muted);
+  background: transparent;
   border: 1px dashed var(--ql-border);
   border-radius: 6px;
   padding: 6px;
   cursor: pointer;
+  width: 100%;
 }
 
-.ql-inf-bg-menu label.ql-inf-file-btn:hover {
+.ql-inf-bg-menu .ql-inf-file-btn:hover {
+  color: var(--ql-title);
+  border-color: var(--ql-title);
+}
+
+.ql-inf-field .ql-inf-file-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--ql-text-muted);
+  background: transparent;
+  border: 1px dashed var(--ql-border);
+  border-radius: 6px;
+  padding: 7px;
+  cursor: pointer;
+  width: 100%;
+}
+
+.ql-inf-field .ql-inf-file-btn:hover {
   color: var(--ql-title);
   border-color: var(--ql-title);
 }
@@ -1396,33 +1430,6 @@
   margin-top: 2px;
 }
 
-.ql-inf-theme-dots {
-  display: flex;
-  gap: 4px;
-  align-items: center;
-}
-
-.ql-inf-theme-dot {
-  width: 15px;
-  height: 15px;
-  border-radius: 50%;
-  border: 1.5px solid var(--ql-border);
-  cursor: pointer;
-  padding: 0;
-}
-
-.ql-inf-theme-dot.ql-active {
-  border-color: var(--ql-title);
-  box-shadow: 0 0 0 2px var(--ql-accent-soft);
-}
-
-.ql-inf-theme-dot-dark { background: #140f0a; }
-.ql-inf-theme-dot-light { background: #f4efe4; }
-.ql-inf-theme-dot-parchment { background: #ddc99a; }
-.ql-inf-theme-dot-midnight { background: #10142b; }
-.ql-inf-theme-dot-bloodmoon { background: #1a0a0b; }
-.ql-inf-theme-dot-verdant { background: #0b1a12; }
-.ql-inf-theme-dot-frost { background: #e8f1f7; }
 
 .ql-inf-workspace {
   flex: 1;
