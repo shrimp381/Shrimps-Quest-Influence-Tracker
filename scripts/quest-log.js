@@ -30,7 +30,7 @@ const INFLUENCE_SWATCHES = ["#c9a227", "#c0463c", "#5a9c6a", "#7d8fc9", "#b06bc9
 // work offline like the rest of the module.
 const INFLUENCE_BG_PRESETS = [
   { key: "void", label: "Void", css: "radial-gradient(ellipse at 30% 20%, #26190f 0%, #140f0a 60%, #0a0704 100%)" },
-  { key: "parch-map", label: "Old Map", css: "repeating-linear-gradient(115deg, #d9c290 0 2px, #cdb27c 2px 60px), radial-gradient(ellipse at 70% 30%, #e6d4a4 0%, #c9ac72 70%)" },
+  { key: "parch-map", label: "Old Map", css: "radial-gradient(ellipse at 70% 30%, #e6d4a4 0%, #c9ac72 70%, #b89860 100%)" },
   { key: "blueprint", label: "Blueprint", css: "linear-gradient(#0e2233,#0e2233), repeating-linear-gradient(0deg, rgba(255,255,255,0.08) 0 1px, transparent 1px 40px), repeating-linear-gradient(90deg, rgba(255,255,255,0.08) 0 1px, transparent 1px 40px)" },
   { key: "slate", label: "Slate", css: "radial-gradient(ellipse at 60% 10%, #33383f 0%, #1c1f24 65%, #121417 100%)" },
 ];
@@ -475,24 +475,16 @@ function requestAddPlayerNote(questId, text) {
 }
 
 function requestSpotlightQuest(questId, tabKey, title) {
-  game.socket.emit(SOCKET_NAME, { action: "spotlightQuest", questId, tabKey, title, from: game.user.name });
+  game.socket.emit(SOCKET_NAME, { action: "spotlightQuest", questId, tabKey, title, from: game.user.id });
   spotlightQuestLocal(questId, tabKey);
 }
 
 function spotlightQuestLocal(questId, tabKey) {
   if (!app) app = new QuestLogApp();
-  // Set the target state *before* the (only) render call below. Calling
-  // render(true) to open the app and then immediately mutating state and
-  // calling render(false) again is a race on a client that's never opened
-  // the app before: Application.render() ignores a second call made while
-  // the first is still in flight, so that second render can be silently
-  // dropped and the freshly-opened window is left showing whatever it
-  // defaulted to instead of the spotlighted quest.
+  // Set the target state *before* the render call below.
   app.activeTab = tabKey;
   app.expandedId = questId;
-  if (app.rendered) app.render(false);
-  else app.render(true);
-  app.bringToTop?.();
+  _forceSpotlightRender(app);
 }
 
 // Same "Show Players" mechanic as spotlightQuest above, retargeted at the
@@ -500,19 +492,37 @@ function spotlightQuestLocal(questId, tabKey) {
 // region and selects the given location/NPC there, so the whole table ends
 // up looking at the same node the GM just called out.
 function requestSpotlightInfluence(regionId, selection) {
-  game.socket.emit(SOCKET_NAME, { action: "spotlightInfluence", regionId, selection, from: game.user.name });
+  game.socket.emit(SOCKET_NAME, { action: "spotlightInfluence", regionId, selection, from: game.user.id });
   spotlightInfluenceLocal(regionId, selection);
 }
 
 function spotlightInfluenceLocal(regionId, selection) {
   if (!app) app = new QuestLogApp();
-  // See the comment in spotlightQuestLocal above — state goes on the app
-  // before the single render() call that will read it via getData().
+  // State goes on the app before the render call that will read it via
+  // getData().
   app.activeTab = "influence";
   app.influenceActiveRegionId = regionId;
   app.influenceSelected = selection || null;
-  if (app.rendered) app.render(false);
-  else app.render(true);
+  _forceSpotlightRender(app);
+}
+
+// Shared "make sure the window is actually visible" logic for both spotlight
+// flows. Two real Foundry Application-v1 behaviors were silently swallowing
+// the earlier fix (which only reordered state-then-render):
+//   1. render(false) is a no-op unless the app is already in the RENDERED
+//      state — on a client that has never opened the Quest Log (the common
+//      case for a player who's never clicked the Scene Controls button),
+//      app.rendered is false, so the *conditional* itself was fine, but any
+//      state where app.rendered reads false for a reason OTHER than "never
+//      rendered" (e.g. CLOSING/ERROR mid-transition) still needs force=true.
+//      Always forcing sidesteps every such edge case instead of enumerating
+//      Application's render-state machine here.
+//   2. A minimized window ignores render() entirely until it's restored —
+//      so a player who minimized the Quest Log never saw it come back.
+function _forceSpotlightRender(app) {
+  const wasMinimized = !!app._minimized;
+  app.render(true);
+  if (wasMinimized && typeof app.maximize === "function") app.maximize();
   app.bringToTop?.();
 }
 
@@ -527,10 +537,10 @@ function onSocketMessage(msg) {
 
   // Broadcast to everyone, including whoever sent it (harmless no-op there
   // since spotlightQuestLocal already ran for them synchronously).
-  if (msg.action === "spotlightQuest" && msg.from !== game.user.name) {
+  if (msg.action === "spotlightQuest" && msg.from !== game.user.id) {
     spotlightQuestLocal(msg.questId, msg.tabKey);
   }
-  if (msg.action === "spotlightInfluence" && msg.from !== game.user.name) {
+  if (msg.action === "spotlightInfluence" && msg.from !== game.user.id) {
     spotlightInfluenceLocal(msg.regionId, msg.selection);
   }
 }
@@ -750,23 +760,27 @@ class QuestLogApp extends Application {
 
     const realTabOrder = Object.keys(data.tabs);
     const finishedCount = this._getFinishedEntries(data).length;
-    const tabOrder = [...realTabOrder, "finished", "influence"];
+    const tabOrder = [...realTabOrder, "finished"];
     const canDeleteTab = realTabOrder.length > 1;
     const tabButtons = tabOrder.map((key) => {
       const active = key === activeTab;
-      const label = key === "finished" ? "Finished" : key === "influence" ? (game.i18n?.localize("QUESTLOG.InfluenceTab") ?? "Influence") : data.tabs[key].label;
-      const count = key === "finished" ? finishedCount : key === "influence" ? null : data.tabs[key].quests.filter((q) => q.status === "active").length;
+      const label = key === "finished" ? "Finished" : data.tabs[key].label;
+      const count = key === "finished" ? finishedCount : data.tabs[key].quests.filter((q) => q.status === "active").length;
       return {
         key,
         label,
         count,
         active,
-        style: `background:${active ? "rgba(201,162,39,0.14)" : "transparent"}; color:${active ? "#e8c96a" : "#a89e88"}; border:none; border-bottom:2px solid ${active ? "#C9A227" : "transparent"}; padding:10px 18px; font-size:14px; font-weight:600; cursor:pointer; border-radius:6px 6px 0 0;`,
-        canManage: isGm && key !== "finished" && key !== "influence" && canDeleteTab,
+        canManage: isGm && key !== "finished" && canDeleteTab,
         isEditing: this.editingTabKey === key,
         nameDraft: this.editingTabKey === key ? this.tabNameDraft : "",
       };
     });
+    // The Influence tab is a different kind of view (a board, not a quest
+    // list) — kept out of tabButtons so it renders as its own distinct
+    // element, past the "+ Tab" admin control rather than mixed in with
+    // the quest tabs it has nothing in common with.
+    const influenceTabButton = { active: isInfluence, label: game.i18n?.localize("QUESTLOG.InfluenceTab") ?? "Influence" };
 
     let questCards = [];
     let categorySource = [];
@@ -860,6 +874,7 @@ class QuestLogApp extends Application {
       calendarEventDraft: this.calendarEventDraft,
 
       tabButtons,
+      influenceTabButton,
       showTabAdmin: isGm,
       showAddTabInput: this.showAddTabInput,
       newTabDraft: this.newTabDraft,
@@ -1026,8 +1041,17 @@ class QuestLogApp extends Application {
           return `background:${preset.css}; background-size:${preset.key === "blueprint" ? "auto,40px 40px,40px 40px" : "cover"};`;
         })();
 
-    const locations = region.locations.map((loc) => this._makeLocationMarker(region, loc));
-    const standaloneNpcs = standaloneInfluenceNpcs(region).map((npc) => this._makeNpcMarkerData(region, npc));
+    // Where each NPC actually ends up drawn on the board — a nested NPC's
+    // visual spot is the fan-out formula in _makeLocationMarker, NOT its
+    // stored x/y, so relationship lines need to look it up here rather than
+    // reading npc.x/npc.y directly (that was drawing lines pointing at a
+    // stale/never-updated position instead of the fanned-out marker).
+    const npcPosMap = new Map();
+    const locations = region.locations.map((loc) => this._makeLocationMarker(region, loc, npcPosMap));
+    const standaloneNpcs = standaloneInfluenceNpcs(region).map((npc) => {
+      npcPosMap.set(npc.id, { x: npc.x, y: npc.y });
+      return this._makeNpcMarkerData(region, npc);
+    });
 
     return {
       regionOptions,
@@ -1046,7 +1070,7 @@ class QuestLogApp extends Application {
       backgroundStyle,
       locations,
       standaloneNpcs,
-      lines: this._buildInfluenceLines(region),
+      lines: this._buildInfluenceLines(region, npcPosMap),
       linking: !!this.influenceLinking,
       linkingNpc: !!this.influenceLinkingNpc,
       hasInspector: !!this.influenceSelected,
@@ -1054,7 +1078,7 @@ class QuestLogApp extends Application {
     };
   }
 
-  _makeLocationMarker(region, loc) {
+  _makeLocationMarker(region, loc, npcPosMap) {
     const selected = this.influenceSelected?.kind === "location" && this.influenceSelected.id === loc.id;
     const linkTarget = this.influenceLinking?.fromId === loc.id;
     const expanded = loc.expanded !== false;
@@ -1079,6 +1103,7 @@ class QuestLogApp extends Application {
         const nx = loc.x + Math.cos(rad) * dist;
         const ny = loc.y + spread + Math.sin(rad) * 30;
         const marker = this._makeNpcMarkerData(region, npc);
+        if (npcPosMap) npcPosMap.set(npc.id, { x: nx, y: ny });
         return {
           ...marker,
           x: nx,
@@ -1089,6 +1114,11 @@ class QuestLogApp extends Application {
           lineY2: ny - 21,
         };
       });
+    } else if (npcPosMap && linkedCount > 0) {
+      // Collapsed: the children are visually merged into the parent marker,
+      // so any relationship line touching one of them should point at the
+      // location's own position instead of a stale/never-updated npc.x/y.
+      siblingNpcs.forEach((npc) => npcPosMap.set(npc.id, { x: loc.x, y: loc.y }));
     }
 
     return {
@@ -1140,7 +1170,7 @@ class QuestLogApp extends Application {
     };
   }
 
-  _buildInfluenceLines(region) {
+  _buildInfluenceLines(region, npcPosMap) {
     const locLines = region.relationships
       .map((r) => {
         const a = findInfluenceLocation(region, r.a);
@@ -1162,14 +1192,20 @@ class QuestLogApp extends Application {
         const a = findInfluenceNpc(region, r.a);
         const b = findInfluenceNpc(region, r.b);
         if (!a || !b) return null;
+        // Use each NPC's actual rendered position (fanned-out under its
+        // location, merged into a collapsed location, or its own x/y if
+        // standalone) rather than the raw stored npc.x/npc.y, which is
+        // stale for anything nested under a location.
+        const posA = npcPosMap?.get(r.a) || { x: a.x, y: a.y };
+        const posB = npcPosMap?.get(r.b) || { x: b.x, y: b.y };
         return {
           id: r.id,
           kind: "npc",
           type: r.type,
           label: r.label || "",
           color: influenceRelColor(r.type),
-          x1: a.x, y1: a.y, x2: b.x, y2: b.y,
-          midX: (a.x + b.x) / 2, midY: (a.y + b.y) / 2,
+          x1: posA.x, y1: posA.y, x2: posB.x, y2: posB.y,
+          midX: (posA.x + posB.x) / 2, midY: (posA.y + posB.y) / 2,
         };
       })
       .filter(Boolean);
@@ -1224,12 +1260,22 @@ class QuestLogApp extends Application {
     base.showStanding = !!node.showStats?.standing;
     base.showFavour = !!node.showStats?.favour;
     base.showRelationship = !!node.showStats?.relationship;
+    base.hasStats = base.showStanding || base.showFavour || base.showRelationship;
     base.standingClass = influenceStatClass(node.standing);
     base.standingLabel = influenceStatLabel(node.standing);
     base.favourClass = influenceStatClass(node.favour);
     base.favourLabel = influenceStatLabel(node.favour);
     base.relationshipClass = influenceStatClass(node.relationship);
     base.relationshipLabel = influenceStatLabel(node.relationship);
+
+    // Lets a GM tie a standalone NPC to a Location (or move it to a
+    // different one, or unlink it back to standalone) from the inspector,
+    // since there was previously no way to do this once an NPC was created
+    // without a location.
+    const linkedLoc = node.locId ? findInfluenceLocation(region, node.locId) : null;
+    base.locId = node.locId || "";
+    base.linkedLocationName = linkedLoc?.name || null;
+    base.locationOptions = region.locations.map((l) => ({ id: l.id, name: l.name, selected: l.id === node.locId }));
     return base;
   }
 
@@ -1241,6 +1287,24 @@ class QuestLogApp extends Application {
     root.addEventListener("click", (ev) => this._onClick(ev));
     root.addEventListener("change", (ev) => this._onChange(ev));
     this._activateInfluenceBoard(root);
+    this._activateOutsideClickClose();
+  }
+
+  // Closes the Region/Background dropdown menus when the user clicks
+  // anywhere outside them, instead of leaving them open until another
+  // toggle click. Bound to the document (not the app root) since a click
+  // dismissing the menu can land outside the app window entirely; the
+  // dedup here keeps at most one such listener alive across re-renders.
+  _activateOutsideClickClose() {
+    if (this._onDocClickCloseMenus) document.removeEventListener("click", this._onDocClickCloseMenus, true);
+    this._onDocClickCloseMenus = (ev) => {
+      if (!this.showInfluenceRegionMenu && !this.showInfluenceBgMenu) return;
+      if (ev.target.closest && ev.target.closest(".ql-inf-menu-wrap")) return;
+      this.showInfluenceRegionMenu = false;
+      this.showInfluenceBgMenu = false;
+      this.render(false);
+    };
+    document.addEventListener("click", this._onDocClickCloseMenus, true);
   }
 
   // Dragging a marker (GM only) or panning the board (anyone) is plain
@@ -1252,6 +1316,15 @@ class QuestLogApp extends Application {
     const wrap = root.querySelector(".ql-inf-board-wrap");
     if (!wrap) return;
     wrap.addEventListener("pointerdown", (ev) => this._onInfluencePointerDown(ev, wrap));
+    wrap.addEventListener("wheel", (ev) => this._onInfluenceWheel(ev), { passive: false });
+  }
+
+  // Scroll-wheel zoom: each tick nudges the zoom by a small step in
+  // whichever direction the wheel scrolled, using the same clamped range
+  // and persistence as the +/- zoom buttons.
+  _onInfluenceWheel(ev) {
+    ev.preventDefault();
+    this._changeInfluenceZoom(ev.deltaY < 0 ? 0.05 : -0.05);
   }
 
   _onInfluencePointerDown(ev, wrap) {
@@ -2089,6 +2162,26 @@ class QuestLogApp extends Application {
         node.notes = el.value;
         saveInfluenceData(infData);
       }); return;
+      case "influence-set-npc-location": this._guardGm(() => {
+        const infData = loadInfluenceData();
+        const region = findInfluenceRegion(infData, this.influenceActiveRegionId);
+        const npc = region && findInfluenceNpc(region, el.dataset.id);
+        if (!npc) return;
+        const newLocId = el.value || null;
+        const loc = newLocId ? findInfluenceLocation(region, newLocId) : null;
+        npc.locId = newLocId;
+        // Give a newly-linked NPC a sane starting spot near its new parent —
+        // it'll actually be positioned by the fan-out formula in
+        // _makeLocationMarker while linked and expanded, but this keeps its
+        // stored x/y sensible if it's ever unlinked again. Unlinking back to
+        // standalone keeps its last computed position instead of jumping.
+        if (loc) {
+          const siblingCount = npcsForInfluenceLocation(region, loc.id).length;
+          npc.x = loc.x + 70 + siblingCount * 60;
+          npc.y = loc.y + 90;
+        }
+        saveInfluenceData(infData);
+      }); return;
       case "influence-rel-label-change": this._guardGm(() => {
         const infData = loadInfluenceData();
         const region = findInfluenceRegion(infData, this.influenceActiveRegionId);
@@ -2319,6 +2412,10 @@ class QuestLogApp extends Application {
   async close(options) {
     if (this.segmentWidget?.rendered) await this.segmentWidget.close();
     if (this.calendarWidget?.rendered) await this.calendarWidget.close();
+    if (this._onDocClickCloseMenus) {
+      document.removeEventListener("click", this._onDocClickCloseMenus, true);
+      this._onDocClickCloseMenus = null;
+    }
     return super.close(options);
   }
 }
