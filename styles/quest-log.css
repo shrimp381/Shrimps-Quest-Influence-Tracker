@@ -1402,10 +1402,14 @@
   border-color: var(--ql-title);
 }
 
-.ql-inf-info-icon {
-  cursor: help;
-  opacity: 0.75;
-  font-size: 13px;
+/* Foundry's own UI intercepts native title-attribute tooltips, so the
+   image-size hint is a small permanent line under the upload button
+   instead of a hover popup. */
+.ql-inf-upload-hint {
+  margin: -4px 0 0;
+  font-size: 10.5px;
+  line-height: 1.35;
+  color: var(--ql-text-faint);
 }
 
 .ql-inf-fit-row {
@@ -1540,13 +1544,17 @@
   stroke-width: 5px;
 }
 
+/* The marker box is sized to exactly match the token graphic (not the
+   token + label + stats stack below it), so left/top + translate(-50%,-50%)
+   centers on the TOKEN itself — this is also what the relationship-line
+   anchor math in quest-log.js assumes. Label and stat pills are pulled out
+   of flow and absolutely positioned below, so their height never shifts
+   where "center" lands. */
 .ql-inf-marker {
   position: absolute;
+  width: 52px;
+  height: 52px;
   transform: translate(-50%, -50%);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
   touch-action: none;
   user-select: none;
   cursor: grab;
@@ -1554,10 +1562,15 @@
 }
 
 .ql-inf-marker.ql-inf-token-npc {
+  width: 42px;
+  height: 42px;
   z-index: 6;
 }
 
 .ql-inf-token {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 52px;
   height: 52px;
   border-radius: 10px;
@@ -1567,7 +1580,6 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
   background-size: cover;
   background-position: center;
 }
@@ -1602,6 +1614,11 @@
 }
 
 .ql-inf-marker-label {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 4px;
   font-size: 11.5px;
   font-weight: 700;
   color: var(--ql-text-soft);
@@ -1616,10 +1633,16 @@
 }
 
 .ql-inf-marker-sub {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 27px;
   display: flex;
   gap: 5px;
   font-size: 9.5px;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 /* NPC names stay hidden on the board until the marker is hovered or
