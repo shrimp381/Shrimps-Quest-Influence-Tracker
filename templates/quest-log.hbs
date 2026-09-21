@@ -10,7 +10,7 @@
   <!-- Top bar -->
   <div class="ql-topbar">
     <div class="ql-topbar-left">
-      <img class="ql-shrimp-icon" src="modules/shrimps-quest-influence-tracker/assets/shrimp-icon.png" alt="">
+      <div class="ql-shrimp-icon" role="img" aria-label="Shrimp"></div>
       <span class="ql-title">Quest Log</span>
     </div>
 
@@ -183,7 +183,7 @@
               Section
               <select data-action="draft-tab-change">
                 {{#each sectionOptions}}
-                  <option value="{{this.key}}" {{#eq this.key ../draft.tab}}selected{{/eq}}>{{this.label}}</option>
+                  <option value="{{this.key}}" {{#if (eq this.key ../draft.tab)}}selected{{/if}}>{{this.label}}</option>
                 {{/each}}
               </select>
             </label>
@@ -191,7 +191,7 @@
               Category
               <select data-action="draft-category-change">
                 {{#each draftCategoryOptions}}
-                  <option value="{{this}}" {{#eq this ../draft.category}}selected{{/eq}}>{{this}}</option>
+                  <option value="{{this}}" {{#if (eq this ../draft.category)}}selected{{/if}}>{{this}}</option>
                 {{/each}}
               </select>
             </label>
@@ -540,9 +540,9 @@
                 <label class="ql-status-label">
                   Status
                   <select data-action="status-change">
-                    <option value="active" {{#eq this.status "active"}}selected{{/eq}}>Active</option>
-                    <option value="completed" {{#eq this.status "completed"}}selected{{/eq}}>Completed</option>
-                    <option value="failed" {{#eq this.status "failed"}}selected{{/eq}}>Failed</option>
+                    <option value="active" {{#if (eq this.status "active")}}selected{{/if}}>Active</option>
+                    <option value="completed" {{#if (eq this.status "completed")}}selected{{/if}}>Completed</option>
+                    <option value="failed" {{#if (eq this.status "failed")}}selected{{/if}}>Failed</option>
                   </select>
                 </label>
                 <button type="button" data-action="delete-quest" class="ql-delete-btn ql-large">Delete Quest</button>

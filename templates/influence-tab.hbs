@@ -9,7 +9,7 @@
         <div class="ql-inf-menu">
           {{#each influence.regionOptions}}
             <div class="ql-inf-region-row {{#if this.active}}ql-active{{/if}}">
-              {{#eq this.id ../influence.editingRegionId}}
+              {{#if (eq this.id ../influence.editingRegionId)}}
                 <div class="ql-inf-region-edit" style="width:100%;">
                   <input type="text" data-action="influence-region-name-draft-change" value="{{../influence.regionNameDraft}}" placeholder="Region name">
                   <div class="ql-form-actions">
@@ -23,7 +23,7 @@
                   <button type="button" data-action="influence-start-edit-region" data-id="{{this.id}}" title="Rename" class="ql-ghost-icon ql-small">&#9998;</button>
                   <button type="button" data-action="influence-delete-region" data-id="{{this.id}}" title="Delete region" class="ql-ghost-icon ql-small">&times;</button>
                 {{/if}}
-              {{/eq}}
+              {{/if}}
             </div>
           {{/each}}
           {{#if isGm}}
@@ -52,10 +52,9 @@
               <button type="button" data-action="influence-set-region-bg" data-bg="{{this.key}}" title="{{this.label}}" class="ql-inf-bg-swatch {{#if this.active}}ql-active{{/if}}" style="background:{{this.css}}"></button>
             {{/each}}
             <div class="ql-inf-upload-row">
-              <label class="ql-inf-file-btn" title="For the sharpest, least-cropped result, upload an image close to 1600&times;1000px (an 8:5 ratio) &mdash; the board's native size. Other sizes work too; use the Fit slider below to adjust.">
+              <button type="button" class="ql-inf-file-btn" data-action="influence-region-bg-upload" title="For the sharpest, least-cropped result, pick an image close to 1600&times;1000px (an 8:5 ratio) &mdash; the board's native size. Other sizes work too; use the Fit slider below to adjust.">
                 Upload image&hellip;
-                <input type="file" accept="image/*" data-action="influence-region-bg-upload" style="display:none;">
-              </label>
+              </button>
               {{#if influence.isCustomBg}}
                 <div class="ql-inf-fit-row">
                   <label class="ql-hint" style="white-space:nowrap;">Fit</label>
@@ -78,12 +77,6 @@
     </div>
 
     <div class="ql-inf-grow"></div>
-
-    <div class="ql-inf-theme-dots" title="Your personal theme for this whole app (only affects your own view)">
-      {{#each influence.themeOptions}}
-        <button type="button" data-action="influence-set-theme" data-theme="{{this.key}}" class="ql-inf-theme-dot ql-inf-theme-dot-{{this.key}} {{#if this.active}}ql-active{{/if}}" title="{{this.label}}"></button>
-      {{/each}}
-    </div>
   </div>
 
   <div class="ql-inf-workspace">
@@ -92,7 +85,7 @@
         <div class="ql-inf-bg-layer" style="{{influence.backgroundStyle}}"></div>
         <svg class="ql-inf-lines" width="1600" height="1000" viewBox="0 0 1600 1000">
           {{#each influence.lines}}
-            <line x1="{{this.x1}}" y1="{{this.y1}}" x2="{{this.x2}}" y2="{{this.y2}}" stroke="{{this.color}}" stroke-width="2" {{#eq this.type "neutral"}}stroke-dasharray="6,5"{{/eq}}></line>
+            <line x1="{{this.x1}}" y1="{{this.y1}}" x2="{{this.x2}}" y2="{{this.y2}}" stroke="{{this.color}}" stroke-width="2" {{#if (eq this.type "neutral")}}stroke-dasharray="6,5"{{/if}}></line>
             <line class="ql-inf-hit" data-action="influence-select-node" data-kind="{{this.kind}}Rel" data-id="{{this.id}}" x1="{{this.x1}}" y1="{{this.y1}}" x2="{{this.x2}}" y2="{{this.y2}}" stroke="transparent" stroke-width="14"></line>
             {{#if this.label}}
               <text class="ql-inf-link-label" x="{{this.midX}}" y="{{this.midY}}" fill="{{this.color}}" text-anchor="middle">{{this.label}}</text>
@@ -173,9 +166,9 @@
             <div class="ql-inf-field"><label>Between</label><span>{{this.aName}} &harr; {{this.bName}}</span></div>
             {{#if ../isGm}}
               <div class="ql-inf-link-type-row">
-                <button type="button" data-action="influence-set-rel-type" data-kind="{{this.relKind}}" data-id="{{this.id}}" data-type="alliance" class="ql-inf-link-type-btn {{#eq this.type "alliance"}}ql-active{{/eq}}">Alliance</button>
-                <button type="button" data-action="influence-set-rel-type" data-kind="{{this.relKind}}" data-id="{{this.id}}" data-type="neutral" class="ql-inf-link-type-btn {{#eq this.type "neutral"}}ql-active{{/eq}}">Neutral</button>
-                <button type="button" data-action="influence-set-rel-type" data-kind="{{this.relKind}}" data-id="{{this.id}}" data-type="hostile" class="ql-inf-link-type-btn {{#eq this.type "hostile"}}ql-active{{/eq}}">Hostile</button>
+                <button type="button" data-action="influence-set-rel-type" data-kind="{{this.relKind}}" data-id="{{this.id}}" data-type="alliance" class="ql-inf-link-type-btn {{#if (eq this.type "alliance")}}ql-active{{/if}}">Alliance</button>
+                <button type="button" data-action="influence-set-rel-type" data-kind="{{this.relKind}}" data-id="{{this.id}}" data-type="neutral" class="ql-inf-link-type-btn {{#if (eq this.type "neutral")}}ql-active{{/if}}">Neutral</button>
+                <button type="button" data-action="influence-set-rel-type" data-kind="{{this.relKind}}" data-id="{{this.id}}" data-type="hostile" class="ql-inf-link-type-btn {{#if (eq this.type "hostile")}}ql-active{{/if}}">Hostile</button>
               </div>
               <div class="ql-inf-field">
                 <label>Label</label>
@@ -195,16 +188,15 @@
                 <label>Colour</label>
                 <div class="ql-inf-swatch-row">
                   {{#each this.swatches}}
-                    <button type="button" data-action="influence-set-node-color" data-kind="{{../kind}}" data-id="{{../id}}" data-color="{{this}}" class="ql-inf-swatch {{#eq this ../color}}ql-active{{/eq}}" style="background:{{this}};"></button>
+                    <button type="button" data-action="influence-set-node-color" data-kind="{{../kind}}" data-id="{{../id}}" data-color="{{this}}" class="ql-inf-swatch {{#if (eq this ../color)}}ql-active{{/if}}" style="background:{{this}};"></button>
                   {{/each}}
                 </div>
               </div>
               <div class="ql-inf-field">
                 <label>Image (optional)</label>
-                <label class="ghost-btn ql-inf-file-btn" style="display:flex;">
+                <button type="button" class="ql-inf-file-btn" data-action="influence-node-image-upload" data-kind="{{this.kind}}" data-id="{{this.id}}">
                   {{#if this.image}}Replace image{{else}}Upload image{{/if}}
-                  <input type="file" accept="image/*" data-action="influence-node-image-upload" data-kind="{{this.kind}}" data-id="{{this.id}}" style="display:none;">
-                </label>
+                </button>
               </div>
               <div class="ql-inf-field">
                 <label>Notes</label>
