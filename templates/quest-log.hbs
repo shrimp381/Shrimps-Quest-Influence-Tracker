@@ -222,7 +222,7 @@
           <button type="button" data-action="confirm-rename-tab" class="ql-small-btn">Save</button>
           <button type="button" data-action="cancel-rename-tab" class="ql-small-btn ql-ghost">Cancel</button>
         {{else}}
-          <button type="button" data-action="set-tab" data-key="{{this.key}}" style="{{this.style}}">
+          <button type="button" data-action="set-tab" data-key="{{this.key}}" class="ql-tab-btn {{#if this.active}}ql-active{{/if}}">
             {{this.label}} <span class="ql-tab-count">({{this.count}})</span>
           </button>
           {{#if this.canManage}}
@@ -242,6 +242,11 @@
         <button type="button" data-action="open-add-tab-input" class="ql-dashed-btn">+ Tab</button>
       {{/if}}
     {{/if}}
+
+    <div class="ql-tab-sep"></div>
+    <button type="button" data-action="set-tab" data-key="influence" class="ql-tab-btn-influence {{#if influenceTabButton.active}}ql-active{{/if}}">
+      {{influenceTabButton.label}}
+    </button>
   </div>
 
   {{#if isInfluence}}
