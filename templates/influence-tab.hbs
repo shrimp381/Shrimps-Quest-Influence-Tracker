@@ -52,8 +52,9 @@
               <button type="button" data-action="influence-set-region-bg" data-bg="{{this.key}}" title="{{this.label}}" class="ql-inf-bg-swatch {{#if this.active}}ql-active{{/if}}" style="background:{{this.css}}"></button>
             {{/each}}
             <div class="ql-inf-upload-row">
-              <button type="button" class="ql-inf-file-btn" data-action="influence-region-bg-upload" title="For the sharpest, least-cropped result, pick an image close to 1600&times;1000px (an 8:5 ratio) &mdash; the board's native size. Other sizes work too; use the Fit slider below to adjust.">
+              <button type="button" class="ql-inf-file-btn" data-action="influence-region-bg-upload">
                 Upload image&hellip;
+                <span class="ql-inf-info-icon" title="For the sharpest, least-cropped result, pick an image close to 1600&times;1000px (an 8:5 ratio) &mdash; the board's native size. Other sizes work too; use the Fit slider below to adjust.">&#9432;</span>
               </button>
               {{#if influence.isCustomBg}}
                 <div class="ql-inf-fit-row">
@@ -204,6 +205,15 @@
               </div>
 
               {{#if this.isNpc}}
+                <div class="ql-inf-field">
+                  <label>Location</label>
+                  <select data-action="influence-set-npc-location" data-id="{{this.id}}">
+                    <option value="">(Unlinked)</option>
+                    {{#each this.locationOptions}}
+                      <option value="{{this.id}}" {{#if this.selected}}selected{{/if}}>{{this.name}}</option>
+                    {{/each}}
+                  </select>
+                </div>
                 <div class="ql-inf-stat-row">
                   <span class="ql-inf-stat-name">Standing</span>
                   <div class="ql-inf-stepper">
@@ -256,6 +266,15 @@
             {{else}}
               <div class="ql-inf-field"><label>Name</label><span>{{this.name}}</span></div>
               {{#if this.notes}}<p class="ql-summary-text">{{this.notes}}</p>{{/if}}
+              {{#if this.isNpc}}
+                {{#if this.hasStats}}
+                  <div class="ql-inf-marker-sub ql-inf-insp-stats">
+                    {{#if this.showStanding}}<span class="ql-inf-stat-pill {{this.standingClass}}">Standing: {{this.standingLabel}}</span>{{/if}}
+                    {{#if this.showFavour}}<span class="ql-inf-stat-pill {{this.favourClass}}">Favour: {{this.favourLabel}}</span>{{/if}}
+                    {{#if this.showRelationship}}<span class="ql-inf-stat-pill {{this.relationshipClass}}">Relationship: {{this.relationshipLabel}}</span>{{/if}}
+                  </div>
+                {{/if}}
+              {{/if}}
               <span class="ql-inf-hint">Only the GM can edit the Influence board. You're viewing it read-only.</span>
             {{/if}}
           {{/if}}
