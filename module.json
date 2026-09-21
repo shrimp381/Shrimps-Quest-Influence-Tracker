@@ -1,27 +1,20 @@
 {
-  "id": "shrimps-enhanced-horizons",
-  "title": "Shrimp's Enhanced Horizons",
-  "description": "A parallax horizon and points-of-interest overlay for your scenes, with journal-linked POIs, save/load presets, a procedural horizon generator, and an expanded diorama Vantage Point view. Built on top of Shrimp's Distant Horizons — see the README for full status and roadmap.",
+  "id": "shrimps-quest-influence-tracker",
+  "title": "Shrimp's Quest and Influence Tracker",
+  "description": "An interactive quest log with GM/player views, tabs and categories, date stamped updates, party notes, an optional Segmented Cycle tie in, and its own internal calendar (with optional Simple Calendar sync) — now with an Influence tracker: a draggable web of Regions, Locations and NPCs/Factions with Standing/Favour/Relationship stats, colour coded alliance/hostile/neutral lines, seven visual themes, and a Show Players button that spotlights the board for the whole table. GM builds and reveals, players read and add notes. Configure from the Shrimp's Quest and Influence Tracker tool in the Scene Controls Notes group.",
   "version": "0.1.0",
-  "compatibility": {
-    "minimum": "13",
-    "verified": "13"
+  "compatibility": { "minimum": "13", "verified": "13" },
+  "authors": [{ "name": "Shrimp381" }],
+  "esmodules": ["scripts/quest-log.js"],
+  "styles": ["styles/quest-log.css"],
+  "languages": [{ "lang": "en", "name": "English", "path": "lang/en.json" }],
+  "relationships": {
+    "recommends": [
+      { "id": "foundryvtt-simple-calendar", "type": "module" },
+      { "id": "segmented-cycle", "type": "module" }
+    ]
   },
-  "authors": [
-    {
-      "name": "Shrimp"
-    }
-  ],
-  "esmodules": [
-    "scripts/enhanced-horizons.js"
-  ],
-  "styles": [
-    "styles/enhanced-horizons.css"
-  ],
-  "url": "https://github.com/Shrimp381/shrimps-enhanced-horizons",
-  "manifest": "https://raw.githubusercontent.com/Shrimp381/shrimps-enhanced-horizons/main/module.json",
-  "download": "https://github.com/Shrimp381/shrimps-enhanced-horizons/releases/latest/download/module.zip",
-  "readme": "https://github.com/Shrimp381/shrimps-enhanced-horizons/blob/main/README.md",
-  "bugs": "https://github.com/Shrimp381/shrimps-enhanced-horizons/issues",
-  "license": "LICENSE"
+  "url": "https://github.com/shrimp381/Shrimps-Quest-Influence-Tracker",
+  "manifest": "https://raw.githubusercontent.com/shrimp381/Shrimps-Quest-Influence-Tracker/main/module.json",
+  "download": "https://github.com/shrimp381/Shrimps-Quest-Influence-Tracker/releases/latest/download/module.zip"
 }
