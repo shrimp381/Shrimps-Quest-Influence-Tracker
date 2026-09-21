@@ -5,11 +5,11 @@ const SOCKET_NAME = `module.${MODULE_ID}`;
 const SEGMENT_BARS = ["day", "night", "custom"];
 const SEGMENT_BAR_LABELS = { day: "Day", night: "Night", custom: "Custom" };
 
-// The Influence tab's seven visual themes, applied to the whole app shell
-// (see the --ql-* theme token blocks in styles/quest-log.css) rather than
-// just the Influence tab itself. THEME_LABELS backs both the GM's shared
-// world-default picker (Quest Log settings) and each client's own personal
-// override picker inside the Influence tab.
+// The module's seven visual themes, applied to the whole app shell (see the
+// --ql-* theme token blocks in styles/quest-log.css) — both the ordinary
+// Quest Log UI and the Influence tab share the same palette. There is a
+// single picker for this, in the Quest Log config panel (GM-only, world
+// setting) — no separate per-tab or per-viewer override.
 const INFLUENCE_THEMES = ["dark", "light", "parchment", "midnight", "bloodmoon", "verdant", "frost"];
 const THEME_LABELS = {
   dark: "Dark",
@@ -224,13 +224,6 @@ function registerInfluenceSettings() {
     type: Object,
     default: defaultInfluenceData(),
   });
-  // "" means "no personal override — follow the GM's shared theme above".
-  game.settings.register(MODULE_ID, "influenceTheme", {
-    scope: "client",
-    config: false,
-    type: String,
-    default: "",
-  });
   // { [regionId]: { pan: {x,y}, zoom } }, purely this client's own camera.
   game.settings.register(MODULE_ID, "influenceView", {
     scope: "client",
@@ -259,18 +252,6 @@ function loadInfluenceData() {
 async function saveInfluenceData(data) {
   if (!game.user.isGM) return;
   await game.settings.set(MODULE_ID, "influenceData", data);
-}
-
-function loadInfluenceTheme() {
-  try {
-    return game.settings.get(MODULE_ID, "influenceTheme") || "";
-  } catch (err) {
-    return "";
-  }
-}
-
-async function saveInfluenceTheme(theme) {
-  await game.settings.set(MODULE_ID, "influenceTheme", theme || "");
 }
 
 function loadInfluenceView() {
@@ -500,10 +481,17 @@ function requestSpotlightQuest(questId, tabKey, title) {
 
 function spotlightQuestLocal(questId, tabKey) {
   if (!app) app = new QuestLogApp();
-  if (!app.rendered) app.render(true);
+  // Set the target state *before* the (only) render call below. Calling
+  // render(true) to open the app and then immediately mutating state and
+  // calling render(false) again is a race on a client that's never opened
+  // the app before: Application.render() ignores a second call made while
+  // the first is still in flight, so that second render can be silently
+  // dropped and the freshly-opened window is left showing whatever it
+  // defaulted to instead of the spotlighted quest.
   app.activeTab = tabKey;
   app.expandedId = questId;
-  app.render(false);
+  if (app.rendered) app.render(false);
+  else app.render(true);
   app.bringToTop?.();
 }
 
@@ -518,11 +506,13 @@ function requestSpotlightInfluence(regionId, selection) {
 
 function spotlightInfluenceLocal(regionId, selection) {
   if (!app) app = new QuestLogApp();
-  if (!app.rendered) app.render(true);
+  // See the comment in spotlightQuestLocal above — state goes on the app
+  // before the single render() call that will read it via getData().
   app.activeTab = "influence";
   app.influenceActiveRegionId = regionId;
   app.influenceSelected = selection || null;
-  app.render(false);
+  if (app.rendered) app.render(false);
+  else app.render(true);
   app.bringToTop?.();
 }
 
@@ -721,14 +711,10 @@ class QuestLogApp extends Application {
     const isGm = realIsGm && !this.viewAsPlayer;
     const calendar = data.calendar;
 
-    // The world-shared default theme (data.theme, set by a GM from the
-    // Quest Log settings panel) can be overridden per viewer from inside
-    // the Influence tab; that override is a client-scoped preference, not
-    // shared, so it never touches the world setting above. Whichever wins
-    // recolors the *entire* app shell (title bar, tabs, everything), not
-    // just the Influence tab, via the ql-theme-* class on the root element.
-    const clientThemeOverride = loadInfluenceTheme();
-    const effectiveTheme = clientThemeOverride || data.theme;
+    // The single, world-shared theme (data.theme, set by a GM from the Quest
+    // Log settings panel) recolors the *entire* app shell — title bar, tabs,
+    // and the Influence tab — via the ql-theme-* class on the root element.
+    const effectiveTheme = data.theme;
 
     const scSynced = !!(data.useSimpleCalendar && isSimpleCalendarActive());
     const { calendar: activeCalendar, dateObj: activeDateObj } = effectiveCalendar(data);
@@ -892,7 +878,7 @@ class QuestLogApp extends Application {
       noQuests: questCards.length === 0,
 
       isInfluence,
-      influence: isInfluence ? this._buildInfluenceContext(isGm, effectiveTheme, data.theme) : null,
+      influence: isInfluence ? this._buildInfluenceContext(isGm) : null,
     };
   }
 
@@ -1016,7 +1002,7 @@ class QuestLogApp extends Application {
 
   /* ---------------- Influence tab data assembly ---------------- */
 
-  _buildInfluenceContext(isGm, effectiveTheme) {
+  _buildInfluenceContext(isGm) {
     const data = loadInfluenceData();
     if (!this.influenceActiveRegionId || !findInfluenceRegion(data, this.influenceActiveRegionId)) {
       this.influenceActiveRegionId = data.activeRegionId || data.regions[0].id;
@@ -1028,7 +1014,11 @@ class QuestLogApp extends Application {
 
     const regionOptions = data.regions.map((r) => ({ id: r.id, name: r.name, active: r.id === region.id }));
 
-    const isCustomBg = !!(region.background && region.background.indexOf("data:") === 0);
+    // A "custom" background is any value that isn't one of the built-in CSS
+    // presets — i.e. a file path the GM picked from Foundry's own storage
+    // via the FilePicker, rather than a data: URI (no more base64 blobs
+    // bloating the world setting).
+    const isCustomBg = !!(region.background && !INFLUENCE_BG_PRESETS.some((p) => p.key === region.background));
     const backgroundStyle = isCustomBg
       ? `background:#000 url(${JSON.stringify(region.background)}) center / ${region.bgScale || 100}% ${region.bgScale || 100}% no-repeat;`
       : (() => {
@@ -1040,7 +1030,6 @@ class QuestLogApp extends Application {
     const standaloneNpcs = standaloneInfluenceNpcs(region).map((npc) => this._makeNpcMarkerData(region, npc));
 
     return {
-      themeOptions: INFLUENCE_THEMES.map((key) => ({ key, label: THEME_LABELS[key], active: key === effectiveTheme })),
       regionOptions,
       showRegionMenu: this.showInfluenceRegionMenu,
       editingRegionId: this.influenceEditingRegionId,
@@ -1912,18 +1901,43 @@ class QuestLogApp extends Application {
         saveInfluenceData(data);
       }); break;
 
+      case "influence-region-bg-upload": this._guardGm(() => {
+        const data = loadInfluenceData();
+        const region = findInfluenceRegion(data, this.influenceActiveRegionId);
+        if (!region) return;
+        const current = INFLUENCE_BG_PRESETS.some((p) => p.key === region.background) ? "" : region.background;
+        this._pickInfluenceImage(current, (path) => {
+          const d2 = loadInfluenceData();
+          const r2 = findInfluenceRegion(d2, this.influenceActiveRegionId);
+          if (!r2) return;
+          r2.background = path;
+          r2.bgScale = 100;
+          saveInfluenceData(d2);
+        });
+      }); break;
+      case "influence-node-image-upload": this._guardGm(() => {
+        const kind = el.dataset.kind;
+        const id = el.dataset.id;
+        const data = loadInfluenceData();
+        const region = findInfluenceRegion(data, this.influenceActiveRegionId);
+        const node = region && (kind === "location" ? findInfluenceLocation(region, id) : findInfluenceNpc(region, id));
+        if (!node) return;
+        this._pickInfluenceImage(node.image, (path) => {
+          const d2 = loadInfluenceData();
+          const r2 = findInfluenceRegion(d2, this.influenceActiveRegionId);
+          const n2 = r2 && (kind === "location" ? findInfluenceLocation(r2, id) : findInfluenceNpc(r2, id));
+          if (!n2) return;
+          n2.image = path;
+          saveInfluenceData(d2);
+        });
+      }); break;
+
       case "influence-npc-stat-inc": this._guardGm(() => this._changeInfluenceNpcStat(el.dataset.id, el.dataset.stat, 1)); break;
       case "influence-npc-stat-dec": this._guardGm(() => this._changeInfluenceNpcStat(el.dataset.id, el.dataset.stat, -1)); break;
 
       case "influence-zoom-in": this._changeInfluenceZoom(0.1); break;
       case "influence-zoom-out": this._changeInfluenceZoom(-0.1); break;
       case "influence-zoom-reset": this._setInfluenceView({ pan: { x: 40, y: 20 }, zoom: 0.6 }); break;
-
-      case "influence-set-theme": {
-        const theme = el.dataset.theme;
-        saveInfluenceTheme(theme).then(() => this.render(false));
-        break;
-      }
 
       case "influence-show-players": this._guardGm(() => {
         const kind = el.dataset.kind;
@@ -2100,23 +2114,6 @@ class QuestLogApp extends Application {
         npc.showStats[el.dataset.stat] = el.checked;
         saveInfluenceData(infData);
       }); return;
-      case "influence-region-bg-upload": this._guardGm(() => this._handleInfluenceImageUpload(el, (dataUrl) => {
-        const infData = loadInfluenceData();
-        const region = findInfluenceRegion(infData, this.influenceActiveRegionId);
-        if (!region) return null;
-        region.background = dataUrl;
-        region.bgScale = 100;
-        return infData;
-      })); return;
-      case "influence-node-image-upload": this._guardGm(() => this._handleInfluenceImageUpload(el, (dataUrl) => {
-        const infData = loadInfluenceData();
-        const region = findInfluenceRegion(infData, this.influenceActiveRegionId);
-        const node = region && (el.dataset.kind === "location" ? findInfluenceLocation(region, el.dataset.id) : findInfluenceNpc(region, el.dataset.id));
-        if (!node) return null;
-        node.image = dataUrl;
-        return infData;
-      })); return;
-
       case "month-days-change": this._guardGm(() => {
         const idx = Number(el.dataset.idx);
         const days = Math.max(1, parseInt(el.value, 10) || 1);
@@ -2191,23 +2188,18 @@ class QuestLogApp extends Application {
     this._setInfluenceView({ pan: current.pan, zoom });
   }
 
-  // Reads the file the GM just picked (a region background or a location/
-  // NPC portrait) as a data URL and hands it to `applyFn`, which mutates a
-  // freshly loaded copy of influenceData and returns it to be saved (or
-  // returns null/undefined to abort, e.g. if the target node has since
-  // been deleted). Kept as a data URL (rather than uploaded to the
-  // server's Data folder) so this stays a single self-contained world
-  // setting, same as the rest of Quest Log's data.
-  _handleInfluenceImageUpload(inputEl, applyFn) {
-    const file = inputEl.files && inputEl.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      const dataUrl = reader.result;
-      const updated = applyFn(dataUrl);
-      if (updated) saveInfluenceData(updated);
-    };
-    reader.readAsDataURL(file);
+  // Opens Foundry's own FilePicker (the same browser used everywhere else
+  // in Foundry for images) scoped to the world's asset storage, rather than
+  // reading a local file into a base64 data URL — that kept every region
+  // background and portrait bloating the single influenceData world
+  // setting, and bypassed the asset library entirely. onPick receives the
+  // server-relative path the GM chose.
+  _pickInfluenceImage(current, onPick) {
+    new FilePicker({
+      type: "image",
+      current: current || "",
+      callback: (path) => onPick(path),
+    }).render(true);
   }
 
   _setInfluenceView(view) {
