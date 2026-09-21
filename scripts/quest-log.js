@@ -298,6 +298,30 @@ function influenceRelColor(type) {
   return type === "alliance" ? "var(--ql-good)" : type === "hostile" ? "var(--ql-bad)" : "var(--ql-link-neutral)";
 }
 
+// Half the on-board footprint of a Location token (52px) / NPC token (42px),
+// plus a little breathing room — used to pull relationship-line endpoints
+// back off each token's true center so the drawn line stops right at the
+// token's edge instead of running underneath the icon.
+const INFLUENCE_LOC_TOKEN_RADIUS = 30;
+const INFLUENCE_NPC_TOKEN_RADIUS = 25;
+
+// Anchors a line at both endpoints' true centers for direction, then trims
+// each end back by its own radius so the visible segment starts/ends at the
+// token's edge rather than passing over it.
+function trimLineToTokenEdges(x1, y1, x2, y2, r1, r2) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const dist = Math.hypot(dx, dy) || 1;
+  const ux = dx / dist;
+  const uy = dy / dist;
+  return {
+    x1: x1 + ux * r1,
+    y1: y1 + uy * r1,
+    x2: x2 - ux * r2,
+    y2: y2 - uy * r2,
+  };
+}
+
 function influenceStatClass(v) {
   return v > 0 ? "ql-pos" : v < 0 ? "ql-neg" : "ql-zero";
 }
@@ -1176,13 +1200,19 @@ class QuestLogApp extends Application {
         const a = findInfluenceLocation(region, r.a);
         const b = findInfluenceLocation(region, r.b);
         if (!a || !b) return null;
+        // Anchor the line at each token's true center (a.x/a.y, b.x/b.y —
+        // now that the marker box is sized to the token itself rather than
+        // the token+label+stats stack, those coordinates ARE the token's
+        // visual center), then trim the drawn segment back to the token
+        // edges so it doesn't run underneath either icon.
+        const trimmed = trimLineToTokenEdges(a.x, a.y, b.x, b.y, INFLUENCE_LOC_TOKEN_RADIUS, INFLUENCE_LOC_TOKEN_RADIUS);
         return {
           id: r.id,
           kind: "location",
           type: r.type,
           label: r.label || "",
           color: influenceRelColor(r.type),
-          x1: a.x, y1: a.y, x2: b.x, y2: b.y,
+          x1: trimmed.x1, y1: trimmed.y1, x2: trimmed.x2, y2: trimmed.y2,
           midX: (a.x + b.x) / 2, midY: (a.y + b.y) / 2,
         };
       })
@@ -1198,13 +1228,14 @@ class QuestLogApp extends Application {
         // stale for anything nested under a location.
         const posA = npcPosMap?.get(r.a) || { x: a.x, y: a.y };
         const posB = npcPosMap?.get(r.b) || { x: b.x, y: b.y };
+        const trimmed = trimLineToTokenEdges(posA.x, posA.y, posB.x, posB.y, INFLUENCE_NPC_TOKEN_RADIUS, INFLUENCE_NPC_TOKEN_RADIUS);
         return {
           id: r.id,
           kind: "npc",
           type: r.type,
           label: r.label || "",
           color: influenceRelColor(r.type),
-          x1: posA.x, y1: posA.y, x2: posB.x, y2: posB.y,
+          x1: trimmed.x1, y1: trimmed.y1, x2: trimmed.x2, y2: trimmed.y2,
           midX: (posA.x + posB.x) / 2, midY: (posA.y + posB.y) / 2,
         };
       })
