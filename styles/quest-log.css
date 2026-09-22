@@ -1745,8 +1745,17 @@
 }
 
 .ql-inf-insp-stats {
+  /* Deliberately its own ruleset, not shared with .ql-inf-marker-sub: that
+     class is positioned absolutely (to sit under a marker out on the
+     board) and this block instead needs to flow normally inside the
+     inspector panel's sidebar. Reusing the class here previously dropped
+     this block ~27px below the whole panel, off the visible inspector. */
+  position: static;
+  display: flex;
   flex-wrap: wrap;
+  gap: 5px;
   font-size: 12px;
+  font-variant-numeric: tabular-nums;
   margin: 6px 0 2px;
 }
 .ql-inf-insp-stats .ql-inf-stat-pill {
