@@ -890,21 +890,25 @@
 
 /* The Influence tab is a different kind of thing from the quest tabs (a
    board, not a list), so it gets its own accent rather than blending into
-   the quest-tab row — a distinct outline pill instead of an underline. */
+   the quest-tab row — a solid, filled pill so it's the most prominent
+   button in the header, not just another outline. Built from --ql-title
+   (mixed toward white for the fill, toward black for the text) rather than
+   a fixed color, so it stays legible and in harmony with all seven themes
+   without a theme-by-theme override. */
 .ql-tab-btn-influence {
-  background: transparent;
-  color: var(--ql-link-neutral);
-  border: 1px solid color-mix(in srgb, var(--ql-link-neutral) 40%, transparent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--ql-title) 55%, white), color-mix(in srgb, var(--ql-title) 88%, white));
+  color: color-mix(in srgb, var(--ql-title) 70%, black);
+  border: 1px solid color-mix(in srgb, var(--ql-title) 60%, black);
   border-radius: 20px;
-  padding: 8px 16px;
+  padding: 8px 18px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 800;
   cursor: pointer;
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--ql-title) 45%, transparent);
 }
 
 .ql-tab-btn-influence.ql-active {
-  background: color-mix(in srgb, var(--ql-link-neutral) 18%, transparent);
-  border-color: var(--ql-link-neutral);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--ql-title) 70%, white), var(--ql-title));
 }
 
 .ql-category-row {
@@ -1297,6 +1301,62 @@
   flex: 1;
 }
 
+/* The Region / Add Location / Add NPC / Add Unlinked NPC / Link Locations /
+   Link NPCs buttons used to come from three different button classes
+   (.ql-icon-btn, .ql-primary-btn, .ql-ghost-btn) with three different
+   paddings and radii, so the row read as visually inconsistent even though
+   they're all equally-weighted toolbar actions. This unifies their shape
+   while leaving the Background/zoom controls further along the toolbar
+   (also .ql-icon-btn) alone, since those weren't part of this row. */
+.ql-inf-toolbar [data-action="influence-toggle-region-menu"],
+.ql-inf-toolbar [data-action="influence-add-location"],
+.ql-inf-toolbar [data-action="influence-add-npc"],
+.ql-inf-toolbar [data-action="influence-add-npc-standalone"],
+.ql-inf-toolbar [data-action="influence-toggle-link-mode"],
+.ql-inf-toolbar [data-action="influence-toggle-link-npc-mode"] {
+  padding: 7px 14px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.1;
+  height: 32px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Region — the theme's own "link-neutral" accent, so it re-colors with
+   every theme instead of clashing with any of them. */
+.ql-inf-toolbar [data-action="influence-toggle-region-menu"] {
+  background: color-mix(in srgb, var(--ql-link-neutral) 22%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ql-link-neutral) 55%, transparent);
+  color: color-mix(in srgb, var(--ql-link-neutral) 85%, white);
+}
+
+/* Add Location — matches the transparent/outline look of the other two Add
+   buttons rather than standing out as a filled primary action. */
+.ql-inf-toolbar [data-action="influence-add-location"] {
+  background: transparent;
+  color: var(--ql-text-muted);
+  border: 1px solid var(--ql-border);
+  font-weight: 600;
+}
+
+/* Link Locations / Link NPCs — the theme's "good" accent, distinct from
+   both Region and the Add group. */
+.ql-inf-toolbar [data-action="influence-toggle-link-mode"],
+.ql-inf-toolbar [data-action="influence-toggle-link-npc-mode"] {
+  background: color-mix(in srgb, var(--ql-good) 22%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ql-good) 55%, transparent);
+  color: color-mix(in srgb, var(--ql-good) 85%, white);
+}
+
+.ql-inf-toolbar [data-action="influence-toggle-link-mode"].ql-active,
+.ql-inf-toolbar [data-action="influence-toggle-link-npc-mode"].ql-active {
+  background: color-mix(in srgb, var(--ql-good) 38%, transparent);
+  border-color: var(--ql-good);
+}
+
 .ql-inf-zoom-group {
   display: flex;
   align-items: center;
@@ -1542,6 +1602,19 @@
   paint-order: stroke;
   stroke: var(--ql-panel-bg-alt);
   stroke-width: 5px;
+  /* The label sits right on top of the line's own click target and paints
+     over it, so it needs to be a click target in its own right (it carries
+     the same data-action/data-kind/data-id as the .ql-inf-hit line — see
+     influence-tab.hbs) rather than just eating the click. */
+  cursor: pointer;
+}
+
+/* Relay messages (see relayMessage() in quest-log.js) are real ChatMessage
+   documents used purely as a transport to reach other clients reliably -
+   nobody should ever see one sitting in the chat log while the GM client
+   that receives the echo cleans it up. */
+.chat-message:has(.ql-inf-relay-ping) {
+  display: none !important;
 }
 
 /* The marker box is sized to exactly match the token graphic (not the
@@ -1692,8 +1765,21 @@
   position: absolute;
   bottom: -6px;
   right: -6px;
-  width: 18px;
-  height: 18px;
+  /* !important + explicit min/max here because this button was rendering
+     with a real (confirmed via getComputedStyle on a live board) width of
+     ~10.5px against an 18px height — some unlayered Foundry core button
+     rule was winning on width specifically, since this module's own CSS
+     loads inside the "modules" cascade layer and any unlayered rule beats
+     a layered one regardless of selector specificity. Pinning every box
+     dimension with !important sidesteps that instead of chasing down the
+     exact competing core rule. */
+  width: 18px !important;
+  height: 18px !important;
+  min-width: 18px !important;
+  min-height: 18px !important;
+  max-width: 18px !important;
+  max-height: 18px !important;
+  flex: 0 0 18px !important;
   border-radius: 50%;
   border: 1.5px solid var(--ql-border-soft);
   background: var(--ql-panel-bg);
@@ -1706,6 +1792,7 @@
   justify-content: center;
   cursor: pointer;
   padding: 0;
+  box-sizing: border-box;
   z-index: 7;
 }
 
