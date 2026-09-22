@@ -1,7 +1,7 @@
 const MODULE_ID = "shrimps-quest-influence-tracker";
 const SC_MODULE_ID = "segmented-cycle";
 const SIMPLE_CALENDAR_MODULE_ID = "foundryvtt-simple-calendar";
-const SOCKET_NAME = `module.${MODULE_ID}`;
+const RELAY_FLAG = "relay";
 const SEGMENT_BARS = ["day", "night", "custom"];
 const SEGMENT_BAR_LABELS = { day: "Day", night: "Night", custom: "Custom" };
 
@@ -495,11 +495,11 @@ function requestAddPlayerNote(questId, text) {
     addPlayerNoteLocal(questId, game.user.name, text);
     return;
   }
-  game.socket.emit(SOCKET_NAME, { action: "addPlayerNote", questId, text, author: game.user.name });
+  relayMessage({ action: "addPlayerNote", questId, text, author: game.user.name });
 }
 
 function requestSpotlightQuest(questId, tabKey, title) {
-  game.socket.emit(SOCKET_NAME, { action: "spotlightQuest", questId, tabKey, title, from: game.user.id });
+  relayMessage({ action: "spotlightQuest", questId, tabKey, title, from: game.user.id });
   spotlightQuestLocal(questId, tabKey);
 }
 
@@ -516,8 +516,51 @@ function spotlightQuestLocal(questId, tabKey) {
 // region and selects the given location/NPC there, so the whole table ends
 // up looking at the same node the GM just called out.
 function requestSpotlightInfluence(regionId, selection) {
-  game.socket.emit(SOCKET_NAME, { action: "spotlightInfluence", regionId, selection, from: game.user.id });
+  relayMessage({ action: "spotlightInfluence", regionId, selection, from: game.user.id });
   spotlightInfluenceLocal(regionId, selection);
+}
+
+/* =========================================================================
+   Cross-client messaging.
+
+   game.socket.emit(`module.${MODULE_ID}`, ...) is the standard way to do
+   this, but it was confirmed live (a bypass listener on a real second
+   client, plus a bare test payload with no relation to this module at all)
+   that at least one live Foundry host does not relay custom "module.X"
+   socket events between clients at all, in either direction — while
+   Foundry's own document-sync socket channel (creating/updating a document,
+   e.g. a ChatMessage) reliably reaches every connected client on the same
+   host. So cross-client messages here ride on a real ChatMessage create
+   instead of the raw module socket, since that's the channel actually
+   proven to work.
+   ========================================================================= */
+
+async function relayMessage(payload) {
+  let msg;
+  try {
+    msg = await ChatMessage.create({
+      content: `<span class="ql-inf-relay-ping"></span>`,
+      whisper: [],
+      flags: { [MODULE_ID]: { [RELAY_FLAG]: payload } },
+    });
+  } catch (err) {
+    console.warn(`${MODULE_ID} | Couldn't send a cross-client update`, err);
+    return;
+  }
+  // This message only exists to carry the payload over a channel that's
+  // actually relayed - it's hidden via CSS on every client the instant it
+  // arrives (see .ql-inf-relay-ping in quest-log.css), and whichever GM
+  // client picks up the echo deletes it again shortly after so it doesn't
+  // linger in anyone's chat log or export.
+  if (game.user.isGM) {
+    setTimeout(() => msg?.delete?.().catch(() => {}), 800);
+  }
+}
+
+function onRelayMessage(chatMessage) {
+  const payload = chatMessage.getFlag(MODULE_ID, RELAY_FLAG);
+  if (!payload) return;
+  onSocketMessage(payload);
 }
 
 function spotlightInfluenceLocal(regionId, selection) {
@@ -2581,7 +2624,7 @@ Hooks.once("init", () => {
 });
 
 Hooks.once("ready", () => {
-  game.socket.on(SOCKET_NAME, onSocketMessage);
+  Hooks.on("createChatMessage", onRelayMessage);
 });
 
 Hooks.on("questLog.toggle", () => toggleApp());
