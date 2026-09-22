@@ -87,9 +87,9 @@
         <svg class="ql-inf-lines" width="1600" height="1000" viewBox="0 0 1600 1000">
           {{#each influence.lines}}
             <line x1="{{this.x1}}" y1="{{this.y1}}" x2="{{this.x2}}" y2="{{this.y2}}" stroke="{{this.color}}" stroke-width="2" {{#if (eq this.type "neutral")}}stroke-dasharray="6,5"{{/if}}></line>
-            <line class="ql-inf-hit" data-action="influence-select-node" data-kind="{{this.kind}}Rel" data-id="{{this.id}}" x1="{{this.x1}}" y1="{{this.y1}}" x2="{{this.x2}}" y2="{{this.y2}}" stroke="transparent" stroke-width="26"></line>
+            <line class="ql-inf-hit" data-action="influence-select-node" data-kind="{{this.kind}}Rel" data-id="{{this.id}}" x1="{{this.x1}}" y1="{{this.y1}}" x2="{{this.x2}}" y2="{{this.y2}}" stroke="transparent" stroke-width="40"></line>
             {{#if this.label}}
-              <text class="ql-inf-link-label" x="{{this.midX}}" y="{{this.midY}}" fill="{{this.color}}" text-anchor="middle">{{this.label}}</text>
+              <text class="ql-inf-link-label" data-action="influence-select-node" data-kind="{{this.kind}}Rel" data-id="{{this.id}}" x="{{this.midX}}" y="{{this.midY}}" fill="{{this.color}}" text-anchor="middle">{{this.label}}</text>
             {{/if}}
           {{/each}}
           {{#each influence.locations}}
