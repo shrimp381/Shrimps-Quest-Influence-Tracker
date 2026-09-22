@@ -777,6 +777,45 @@ class QuestLogApp extends Application {
     });
   }
 
+  // Every render() call replaces this app's whole DOM (getData + Handlebars
+  // + a fresh injection), so any scrollable region inside it - most
+  // noticeably the Influence inspector panel on the right - silently snaps
+  // back to scrollTop 0 on every re-render, including the world-setting
+  // re-render that follows something as small as clicking a stat's +/-.
+  // Capture scroll offsets right before the DOM gets torn down and restore
+  // them right after the new DOM lands (activateListeners runs synchronously
+  // once the fresh HTML is in place, before the browser paints it).
+  render(force, options) {
+    this._pendingScroll = this._captureScrollPositions();
+    return super.render(force, options);
+  }
+
+  _captureScrollPositions() {
+    const root = this.element?.[0];
+    if (!root) return null;
+    const read = (sel) => {
+      const node = root.querySelector(sel);
+      return node ? node.scrollTop : null;
+    };
+    return {
+      windowContent: read(".window-content"),
+      inspector: read(".ql-inf-inspector"),
+    };
+  }
+
+  _restoreScrollPositions(pos) {
+    if (!pos) return;
+    const root = this.element?.[0];
+    if (!root) return;
+    const apply = (sel, val) => {
+      if (val === null) return;
+      const node = root.querySelector(sel);
+      if (node) node.scrollTop = val;
+    };
+    apply(".window-content", pos.windowContent);
+    apply(".ql-inf-inspector", pos.inspector);
+  }
+
   /* ---------------- data assembly ---------------- */
 
   getData() {
@@ -1362,6 +1401,8 @@ class QuestLogApp extends Application {
     root.addEventListener("change", (ev) => this._onChange(ev));
     this._activateInfluenceBoard(root);
     this._activateOutsideClickClose();
+    this._restoreScrollPositions(this._pendingScroll);
+    this._pendingScroll = null;
   }
 
   // Closes the Region/Background dropdown menus when the user clicks
