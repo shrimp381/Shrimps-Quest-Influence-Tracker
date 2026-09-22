@@ -1404,6 +1404,22 @@ class QuestLogApp extends Application {
   _onInfluencePointerDown(ev, wrap) {
     if (ev.button !== undefined && ev.button !== 0) return;
     const marker = ev.target.closest("[data-marker-id]");
+
+    // A pointerdown that lands on some other actionable control - the
+    // expand/collapse flag or an upload button nested inside a marker, or a
+    // relationship line/label out on the board with no marker ancestor at
+    // all - must not be treated as the start of a marker drag or a board
+    // pan. setPointerCapture() below retargets the browser's own
+    // compatibility "click" event to whatever element it's called on, so
+    // calling it unconditionally was silently redirecting real clicks on
+    // those controls to the marker (or starting a pan-then-re-render cycle
+    // that tore out the very SVG element the click was meant to land on)
+    // instead of ever reaching the ordinary data-action click delegate.
+    // Only the marker's own body (data-action lives on the same element as
+    // data-marker-id) should still fall through to drag handling below.
+    const actionTarget = ev.target.closest("[data-action]");
+    if (actionTarget && actionTarget !== marker) return;
+
     const data = loadInfluenceData();
     const region = findInfluenceRegion(data, this.influenceActiveRegionId);
     if (!region) return;
