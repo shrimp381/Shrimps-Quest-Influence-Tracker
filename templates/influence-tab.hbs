@@ -265,16 +265,16 @@
               <button type="button" data-action="influence-delete-node" data-kind="{{this.kind}}" data-id="{{this.id}}" class="ql-delete-btn ql-large">Delete {{this.kindLabel}}</button>
             {{else}}
               <div class="ql-inf-field"><label>Name</label><span>{{this.name}}</span></div>
-              {{#if this.notes}}<p class="ql-summary-text">{{this.notes}}</p>{{/if}}
               {{#if this.isNpc}}
                 {{#if this.hasStats}}
-                  <div class="ql-inf-marker-sub ql-inf-insp-stats">
+                  <div class="ql-inf-insp-stats">
                     {{#if this.showStanding}}<span class="ql-inf-stat-pill {{this.standingClass}}">Standing: {{this.standingLabel}}</span>{{/if}}
                     {{#if this.showFavour}}<span class="ql-inf-stat-pill {{this.favourClass}}">Favour: {{this.favourLabel}}</span>{{/if}}
                     {{#if this.showRelationship}}<span class="ql-inf-stat-pill {{this.relationshipClass}}">Relationship: {{this.relationshipLabel}}</span>{{/if}}
                   </div>
                 {{/if}}
               {{/if}}
+              {{#if this.notes}}<p class="ql-summary-text">{{this.notes}}</p>{{/if}}
               <span class="ql-inf-hint">Only the GM can edit the Influence board. You're viewing it read-only.</span>
             {{/if}}
           {{/if}}
